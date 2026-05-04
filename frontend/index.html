@@ -2,53 +2,70 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Real Estate AI SaaS</title>
+<title>AI Real Estate Dashboard</title>
 <style>
-body { font-family: Arial; background:#0f0f0f; color:white; padding:20px; }
-input, button { width:95%; padding:10px; margin:5px; }
-.card { border:1px solid #444; padding:15px; margin-top:10px; }
+body { font-family: Arial; background:#111; color:white; padding:15px; }
+input, button { width:100%; padding:12px; margin:6px 0; }
+.card { border:1px solid #333; padding:12px; margin-top:10px; border-radius:10px; }
+button { background:#00c853; color:white; border:none; }
 </style>
 </head>
 <body>
 
-<h2>🏠 AI Deal SaaS Dashboard</h2>
+<h2>🏠 AI Deal Dashboard</h2>
 
+<input id="address" placeholder="Property Address">
 <input id="purchase" placeholder="Purchase Price">
 <input id="arv" placeholder="ARV">
-<input id="sqft" placeholder="Square Footage">
-<input id="condition" placeholder="Cost per SqFt">
-<input id="months" placeholder="Months">
+<input id="sqft" placeholder="Square Feet">
 
-<button onclick="run()">Analyze Deal</button>
+<button onclick="analyze()">Analyze Deal</button>
+<button onclick="saveDeal()">Save Deal</button>
 
 <div id="out"></div>
 
 <script>
-async function run(){
 
-let res = await fetch("https://YOUR-BACKEND-URL.onrender.com/analyze", {
+let lastResult = null;
+
+async function analyze(){
+
+let res = await fetch("https://YOUR-BACKEND.onrender.com/analyze", {
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body: JSON.stringify({
-purchase: +document.getElementById("purchase").value,
-arv: +document.getElementById("arv").value,
-sqft: +document.getElementById("sqft").value,
-condition: +document.getElementById("condition").value,
-months: +document.getElementById("months").value
+purchase:+purchase.value,
+arv:+arv.value,
+sqft:+sqft.value,
+condition:100,
+months:6
 })
 });
 
 let data = await res.json();
+lastResult = data;
 
 document.getElementById("out").innerHTML = `
 <div class="card">
 <h3>Strategy: ${data.strategy}</h3>
 <p>Profit: $${data.profit.toFixed(0)}</p>
-<p>Total Investment: $${data.total.toFixed(0)}</p>
-<p>Transformation Cost: $${data.transformation.toFixed(0)}</p>
-</div>
-`;
+<p>Transformation: $${data.transformation.toFixed(0)}</p>
+</div>`;
 }
+
+async function saveDeal(){
+
+if(!lastResult) return alert("Run analysis first");
+
+await fetch("https://YOUR-BACKEND.onrender.com/save", {
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify(lastResult)
+});
+
+alert("Deal Saved!");
+}
+
 </script>
 
 </body>
