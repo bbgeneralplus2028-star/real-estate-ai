@@ -1,16 +1,14 @@
 import os
 import psycopg2
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
-# -------------------------
-# APP INIT (THIS WAS MISSING)
-# -------------------------
+# Create FastAPI app FIRST (this fixes your error)
 app = FastAPI()
 
-# -------------------------
+# ---------------------------
 # DATABASE CONNECTION
-# -------------------------
+# ---------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_conn():
@@ -18,46 +16,42 @@ def get_conn():
         return None
     return psycopg2.connect(DATABASE_URL)
 
-# -------------------------
-# SIMPLE FRONTEND (OPTIONAL)
-# -------------------------
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return """
-    <html>
-        <head><title>Real Estate AI</title></head>
-        <body>
-            <h1>Real Estate AI API Running</h1>
-            <p>Use /save endpoint to store data</p>
-        </body>
-    </html>
-    """
+# ---------------------------
+# ROUTES
+# ---------------------------
 
-# -------------------------
-# SAVE DATA ENDPOINT
-# -------------------------
+@app.get("/")
+def home():
+    return {"status": "running"}
+
 @app.post("/save")
 async def save_data(request: Request):
     data = await request.json()
 
     conn = get_conn()
     if conn is None:
-        return JSONResponse({"error": "DATABASE_URL not set"}, status_code=500)
+        return JSONResponse(
+            {"error": "DATABASE_URL not set"},
+            status_code=500
+        )
 
-    cur = conn.cursor()
+    try:
+        cur = conn.cursor()
 
-    # simple table-safe insert (you can expand later)
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS saved_data (id SERIAL PRIMARY KEY, data TEXT)"
-    )
+        # Example table insert (adjust to your schema)
+        cur.execute(
+            "INSERT INTO saved_data (payload) VALUES (%s)",
+            (str(data),)
+        )
 
-    cur.execute(
-        "INSERT INTO saved_data (data) VALUES (%s)",
-        (str(data),)
-    )
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        return {"status": "saved", "data": data}
 
-    return {"status": "saved", "data": data}
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e)},
+            status_code=500
+        )
