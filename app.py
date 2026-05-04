@@ -1,14 +1,51 @@
 from fastapi import FastAPI
-import os
+from db import get_connection
 
-app = FastAPI()
+app = FastAPI(title="Real Estate AI API")
 
-# Basic health check (Render needs this kind of endpoint to confirm app is alive)
 @app.get("/")
 def home():
-    return {"status": "running"}
+    return {"status": "running", "message": "API is live"}
 
-# Example POST endpoint
-@app.post("/save")
-def save_data():
-    return {"message": "Save endpoint working"}
+# -------------------------
+# CREATE LISTING
+# -------------------------
+@app.post("/listings")
+def create_listing(title: str, price: float, location: str):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT INTO listings (title, price, location)
+        VALUES (%s, %s, %s)
+        RETURNING id;
+        """,
+        (title, price, location)
+    )
+
+    listing_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {"id": listing_id, "status": "created"}
+
+# -------------------------
+# GET ALL LISTINGS
+# -------------------------
+@app.get("/listings")
+def get_listings():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id, title, price, location FROM listings;")
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return [
+        {"id": r[0], "title": r[1], "price": r[2], "location": r[3]}
+        for r in rows
+    ]
