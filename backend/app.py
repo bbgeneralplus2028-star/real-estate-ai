@@ -1,29 +1,34 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI
+from pydantic import BaseModel
+import psycopg2
+import os
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route("/")
-def home():
-    return "AI Property System Running"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-@app.route("/analyze", methods=["POST"])
-def analyze():
-    data = request.json
+def get_conn():
+    return psycopg2.connect(DATABASE_URL)
 
-    P = float(data["purchase"])
-    ARV = float(data["arv"])
-    sqft = float(data["sqft"])
-    cost_per_ft = float(data["condition"])
-    months = float(data["months"])
+class Deal(BaseModel):
+    purchase: float
+    arv: float
+    sqft: float
+    condition: float
+    months: float
 
-    RC = sqft * cost_per_ft
+
+@app.post("/analyze")
+def analyze(deal: Deal):
+
+    RC = deal.sqft * deal.condition
     EC = RC * 0.10
-    TC = months * 2000
+    TC = deal.months * 2000
     CC = (RC + EC) * 0.15
 
     TP = RC + EC + TC + CC
-    total = P + TP
-    profit = ARV - total
+    total = deal.purchase + TP
+    profit = deal.arv - total
 
     if profit > 80000:
         strategy = "FLIP"
@@ -34,7 +39,7 @@ def analyze():
     else:
         strategy = "WALK AWAY"
 
-    return jsonify({
+    return {
         "repair": RC,
         "equipment": EC,
         "holding": TC,
@@ -43,7 +48,29 @@ def analyze():
         "total": total,
         "profit": profit,
         "strategy": strategy
-    })
+    }
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+
+@app.post("/save")
+def save(data: dict):
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO deals 
+        (purchase, arv, profit, transformation_cost, strategy, risk_level)
+        VALUES (%s,%s,%s,%s,%s,%s)
+    """, (
+        data.get("purchase", 0),
+        data.get("arv", 0),
+        data.get("profit", 0),
+        data.get("transformation", 0),
+        data.get("strategy", ""),
+        "AUTO"
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "saved"}
