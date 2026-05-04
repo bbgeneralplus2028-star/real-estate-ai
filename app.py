@@ -1,3 +1,21 @@
+from fastapi import FastAPI
+import os
+import psycopg2
+
+app = FastAPI()   # 👈 MUST BE FIRST
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+
+def get_conn():
+    if not DATABASE_URL:
+        return None
+    return psycopg2.connect(DATABASE_URL)
+
+
+@app.post("/save")
+def save(data: dict):
+    return {"status": "ok"}
 @app.post("/save")
 def save(data: dict):
 
