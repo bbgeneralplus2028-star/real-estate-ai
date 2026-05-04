@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Property System</title>
+<style>
+body { background:#111; color:white; font-family:Arial; padding:15px; }
+input, button { width:95%; padding:10px; margin:5px; }
+.card { border:1px solid #444; padding:15px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h2>🏠 AI Property Analyzer</h2>
+
+<input id="purchase" placeholder="Purchase Price">
+<input id="arv" placeholder="ARV">
+<input id="sqft" placeholder="Square Footage">
+<input id="condition" placeholder="Cost per SqFt (50 / 100 / 180)">
+<input id="months" placeholder="Months">
+
+<button onclick="run()">Analyze</button>
+
+<div id="out"></div>
+
+<script>
+async function run(){
+let res = await fetch("/analyze", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+        purchase:document.getElementById("purchase").value,
+        arv:document.getElementById("arv").value,
+        sqft:document.getElementById("sqft").value,
+        condition:document.getElementById("condition").value,
+        months:document.getElementById("months").value
+    })
+});
+
+let data = await res.json();
+
+document.getElementById("out").innerHTML = `
+<div class="card">
+<h3>Transformation: $${data.transformation.toLocaleString()}</h3>
+<h3>Total: $${data.total.toLocaleString()}</h3>
+<h2>Profit: $${data.profit.toLocaleString()}</h2>
+<h3>Strategy: ${data.strategy}</h3>
+</div>
+`;
+}
+</script>
+
+</body>
+</html>
