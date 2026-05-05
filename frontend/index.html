@@ -1,72 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Real Estate Dashboard</title>
-<style>
-body { font-family: Arial; background:#111; color:white; padding:15px; }
-input, button { width:100%; padding:12px; margin:6px 0; }
-.card { border:1px solid #333; padding:12px; margin-top:10px; border-radius:10px; }
-button { background:#00c853; color:white; border:none; }
-</style>
+    <title>Real Estate AI SaaS</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>🏠 AI Deal Dashboard</h2>
+<div class="container">
+    <h1>🏠 Real Estate AI</h1>
 
-<input id="address" placeholder="Property Address">
-<input id="purchase" placeholder="Purchase Price">
-<input id="arv" placeholder="ARV">
-<input id="sqft" placeholder="Square Feet">
+    <div class="search-box">
+        <input id="searchInput" placeholder="Search homes (NYC, NJ, etc)">
+        <button onclick="searchProperties()">Search</button>
+    </div>
 
-<button onclick="analyze()">Analyze Deal</button>
-<button onclick="saveDeal()">Save Deal</button>
+    <div id="results"></div>
+</div>
 
-<div id="out"></div>
-
-<script>
-
-let lastResult = null;
-
-async function analyze(){
-
-let res = await fetch("https://YOUR-BACKEND.onrender.com/analyze", {
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body: JSON.stringify({
-purchase:+purchase.value,
-arv:+arv.value,
-sqft:+sqft.value,
-condition:100,
-months:6
-})
-});
-
-let data = await res.json();
-lastResult = data;
-
-document.getElementById("out").innerHTML = `
-<div class="card">
-<h3>Strategy: ${data.strategy}</h3>
-<p>Profit: $${data.profit.toFixed(0)}</p>
-<p>Transformation: $${data.transformation.toFixed(0)}</p>
-</div>`;
-}
-
-async function saveDeal(){
-
-if(!lastResult) return alert("Run analysis first");
-
-await fetch("https://YOUR-BACKEND.onrender.com/save", {
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body: JSON.stringify(lastResult)
-});
-
-alert("Deal Saved!");
-}
-
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
