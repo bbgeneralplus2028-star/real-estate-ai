@@ -14,5 +14,5 @@ def home():
     return {"status": "real estate AI running"}
 
 @app.post("/save")
-def save_item():
+def save():
     return {"message": "save endpoint working"}
