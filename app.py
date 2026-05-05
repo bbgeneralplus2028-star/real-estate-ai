@@ -1,51 +1,18 @@
 from fastapi import FastAPI
-from db import get_connection
+import os
+import psycopg2
 
-app = FastAPI(title="Real Estate AI API")
+app = FastAPI()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+def get_conn():
+    return psycopg2.connect(DATABASE_URL)
 
 @app.get("/")
 def home():
-    return {"status": "running", "message": "API is live"}
+    return {"status": "real estate AI running"}
 
-# -------------------------
-# CREATE LISTING
-# -------------------------
-@app.post("/listings")
-def create_listing(title: str, price: float, location: str):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        INSERT INTO listings (title, price, location)
-        VALUES (%s, %s, %s)
-        RETURNING id;
-        """,
-        (title, price, location)
-    )
-
-    listing_id = cur.fetchone()[0]
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return {"id": listing_id, "status": "created"}
-
-# -------------------------
-# GET ALL LISTINGS
-# -------------------------
-@app.get("/listings")
-def get_listings():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT id, title, price, location FROM listings;")
-    rows = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return [
-        {"id": r[0], "title": r[1], "price": r[2], "location": r[3]}
-        for r in rows
-    ]
+@app.post("/save")
+def save_item():
+    return {"message": "save endpoint working"}
